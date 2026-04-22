@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Rezeptbuch</title>
+
+<style>
+:root {
+    --bg-color: radial-gradient(circle, #0b1220, #020617);
+    --text-color: white;
+    --input-bg: #1e293b;
+    --button-bg: #2563eb;
+    --button-delete-bg: #ef4444;
+}
+
+body {
+    font-family: sans-serif;
+    background: var(--bg-color);
+    color: var(--text-color);
+    padding: 20px;
+}
+
+input, textarea {
+    margin: 5px;
+    padding: 8px;
+    border-radius: 6px;
+    border: none;
+    background: var(--input-bg);
+    color: var(--text-color);
+}
+
+button {
+    margin: 5px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    background: var(--button-bg);
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.ingredient-row {
+    margin-bottom: 5px;
+}
+
+.ingredient-row button {
+    background: var(--button-delete-bg);
+    margin-left: 5px;
+}
+
+.recipe {
+    background: var(--input-bg);
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 10px;
+    position: relative;
+}
+
+.recipe:hover .delete-button {
+    display: inline-block;
+}
+
+.delete-button {
+    display: none;
+    background: var(--button-delete-bg);
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}
+
+.edit-button {
+    margin-top: 10px;
+}
+
+.radial-wrapper {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 40px auto;
+}
+
+.center-display {
+    position: absolute;
+    top: 110px;
+    left: 110px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    background: var(--button-bg);
+    box-shadow: 0 0 25px #3b82f6;
+}
+
+.radial-item {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #3b82f6;
+    text-align: center;
+    line-height: 30px;
+    box-shadow: 0 0 10px #3b82f6;
+}
+
+.search-container {
+    margin-bottom: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Rezeptbuch</h1>
+
+<!-- RAD -->
+<div class="radial-wrapper">
+    <div id="radial"></div>
+    <div id="centerLetter" class="center-display" aria-label="Current Letter">A</div>
+</div>
+
+<!-- HEADER -->
+<div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2>Rezepte</h2>
+    <button onclick="toggleForm()" aria-label="Add Recipe">+ Rezept</button>
+    <button onclick="loadAllRecipes()">Alle Rezepte anzeigen</button>
+</div>
+
+<!-- SEARCH CONTAINER -->
+<div class="search-container">
+    <input id="searchInput" placeholder="Suche nach Rezepten..." aria-label="Search Recipes">
+    <button onclick="performSearch()">Suchen</button>
+</div>
+
+<!-- FORM -->
+<div id="formContainer" style="display:none; margin-top:20px;" aria-labelledby="recipe-form">
+    <input id="title" placeholder="Titel" aria-label="Recipe Title">
+    <input id="servings" type="number" value="1" aria-label="Servings">
+    <br>
+    <textarea id="desc" placeholder="Beschreibung" aria-label="Recipe Description"></textarea>
+
+    <h3>Zutaten</h3>
+    <div id="ingredients" aria-label="Ingredients List"></div>
+
+    <button onclick="addIngredient()" aria-label="Add Ingredient">+ Zutat</button>
+    <br><br>
+    <button onclick="save()">Speichern</button>
+</div>
+
+<!-- LIST -->
+<div id="list" aria-labelledby="recipe-list"></div>
+
+<script>
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+let angle = 0;
+let velocity = 0;
+let isDragging = false;
+let lastAngle = 0;
+let currentLetter = "A";
+
+const menu = document.getElementById("radial");
+const centerDisplay = document.getElementById("centerLetter");
+
+const center = { x: 150, y: 150 };
+const radius = 120;
+
+function buildWheel() {
+    menu.innerHTML = "";
+    letters.forEach(l => {
+        const el = document.createElement("div");
+        el.className = "radial-item";
+        el.innerText = l;
+        menu.appendChild(el);
+    });
+    updateWheel();
+}
+
+function updateWheel() {
+    const items = document.querySelectorAll(".radial-item");
+
+    items.forEach((item, i) => {
+        const a = angle + (i / letters.length) * 2 * Math.PI;
+
+        const x = center.x + radius * Math.cos(a);
+        const y = center.y + radius * Math.sin(a);
+
+        item.style.left = `${x}px`;
+        item.style.top = `${y}px`;
+
+        const diff = Math.abs(normalize(a + Math.PI / 2));
+
+        if (diff < 0.2) {
+            item.style.transform = "scale(1.6)";
+            currentLetter = item.innerText;
+        } else {
+            item.style.transform = "scale(1)";
+        }
+    });
+
+    centerDisplay.innerText = currentLetter;
+}
+
+function normalize(a) {
+    while (a > Math.PI) a -= 2 * Math.PI;
+    while (a < -Math.PI) a += 2 * Math.PI;
+    return a;
+}
+
+function getAngle(x, y) {
+    return Math.atan2(y - center.y, x - center.x);
+}
+
+menu.addEventListener("mousedown", e => {
+    isDragging = true;
+    lastAngle = getAngle(e.offsetX, e.offsetY);
+});
+
+window.addEventListener("mousemove", e => {
+    if (!isDragging) return;
+    const r = menu.getBoundingClientRect();
+    const a = getAngle(e.clientX - r.left, e.clientY - r.top);
+
+    let d = normalize(a - lastAngle);
+    angle += d;
+    velocity = d;
+    lastAngle = a;
+
+    updateWheel();
+});
+
+window.addEventListener("mouseup", end);
+
+function end() {
+    if (!isDragging) return;
+    isDragging = false;
+    inertia();
+}
+
+function inertia() {
+    velocity *= 0.95;
+    angle += velocity;
+    updateWheel();
+
+    if (Math.abs(velocity) > 0.001) {
+        requestAnimationFrame(inertia);
+    } else snap();
+}
+
+function snap() {
+    const step = (2 * Math.PI) / letters.length;
+    const target = Math.round(angle / step) * step;
+
+    function anim() {
+        let diff = target - angle;
+
+        if (Math.abs(diff) < 0.001) {
+            angle = target;
+            updateWheel();
+            loadLetter(currentLetter);
+            return;
+        }
+
+        angle += diff * 0.2;
+        updateWheel();
+        requestAnimationFrame(anim);
+    }
+    anim();
+}
+
+function loadLetter(letter) {
+    fetch(`/recipes/${letter}`)
+        .then(res => res.json())
+        .then(data => {
+            render(data);
+        });
+}
+
+function toggleForm() {
+    const formContainer = document.getElementById("formContainer");
+    if (formContainer.style.display === "none") {
+        formContainer.style.display = "block";
+    } else {
+        formContainer.style.display = "none";
+    }
+}
+
+function addIngredient() {
+    const ingredientsDiv = document.getElementById("ingredients");
+    const ingredientInput = document.createElement("div");
+    ingredientInput.className = "ingredient-row";
+
+    const nameInput = document.createElement("input");
+    nameInput.placeholder = "Name";
+    nameInput.ariaLabel = "Ingredient Name";
+
+    const amountInput = document.createElement("input");
+    amountInput.type = "number";
+    amountInput.placeholder = "Menge";
+    amountInput.ariaLabel = "Ingredient Amount";
+
+    const unitInput = document.createElement("input");
+    unitInput.placeholder = "Einheit";
+    unitInput.ariaLabel = "Ingredient Unit";
+
+    const deleteButton = document.createElement("button");
+    deleteButton.innerText = "-";
+    deleteButton.onclick = function() {
+        ingredientsDiv.removeChild(ingredientInput);
+    };
+
+    ingredientInput.appendChild(nameInput);
+    ingredientInput.appendChild(amountInput);
+    ingredientInput.appendChild(unitInput);
+    ingredientInput.appendChild(deleteButton);
+
+    ingredientsDiv.appendChild(ingredientInput);
+}
+
+function save() {
+    const title = document.getElementById("title").value;
+    const servings = parseInt(document.getElementById("servings").value, 10);
+    const description = document.getElementById("desc").value;
+
+    const ingredientsDiv = document.getElementById("ingredients");
+    const ingredients = Array.from(ingredientsDiv.children).map(child => ({
+        name: child.querySelector('input[placeholder="Name"]').value,
+        amount: parseFloat(child.querySelector('input[placeholder="Menge"]').value),
+        unit: child.querySelector('input[placeholder="Einheit"]').value
+    }));
+
+    fetch("/add", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            title,
+            description,
+            servings,
+            ingredients
+        })
+    }).then(res => res.json())
+      .then(data => {
+          if (data.status === "ok") {
+              alert("Rezept erfolgreich gespeichert!");
+              toggleForm();
+              loadLetter(currentLetter);
+          } else {
+              alert("Fehler beim Speichern des Rezepts.");
+          }
+      });
+}
+
+function render(recipes) {
+    const listDiv = document.getElementById("list");
+    listDiv.innerHTML = "";
+
+    recipes.forEach(recipe => {
+        const recipeDiv = document.createElement("div");
+        recipeDiv.className = "recipe";
+
+        const title = document.createElement("h3");
+        title.innerText = recipe.title;
+
+        const servings = document.createElement("p");
+        servings.innerText = `Servings: ${recipe.servings}`;
+
+        const description = document.createElement("p");
+        description.innerText = recipe.description;
+
+        const ingredientsList = document.createElement("ul");
+        recipe.ingredients.forEach(ingredient => {
+            const ingredientItem = document.createElement("li");
+            ingredientItem.innerText = `${ingredient.amount} ${ingredient.unit} ${ingredient.name}`;
+            ingredientsList.appendChild(ingredientItem);
+        });
+
+        const editButton = document.createElement("button");
+        editButton.className = "edit-button";
+        editButton.innerText = "Bearbeiten";
+        editButton.onclick = function() {
+            // Implementiere die Bearbeitungsfunktion hier
+            alert(`Rezept "${recipe.title}" bearbeiten`);
+        };
+
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "delete-button";
+        deleteButton.innerText = "Löschen";
+        deleteButton.onclick = function() {
+            if (confirm(`Möchtest du das Rezept "${recipe.title}" wirklich löschen?`)) {
+                fetch(`/delete/${recipe.id}`, { method: "DELETE" })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === "deleted") {
+                            alert("Rezept erfolgreich gelöscht!");
+                            loadLetter(currentLetter);
+                        } else {
+                            alert("Fehler beim Löschen des Rezepts.");
+                        }
+                    });
+            }
+        };
+
+        recipeDiv.appendChild(title);
+        recipeDiv.appendChild(servings);
+        recipeDiv.appendChild(description);
+        recipeDiv.appendChild(ingredientsList);
+        recipeDiv.appendChild(editButton);
+        recipeDiv.appendChild(deleteButton);
+
+        listDiv.appendChild(recipeDiv);
+    });
+}
+
+function loadAllRecipes() {
+    fetch("/recipes")
+        .then(res => res.json())
+        .then(data => {
+            render(data);
+        });
+}
+
+function performSearch() {
+    const query = document.getElementById("searchInput").value;
+    fetch(`/search?query=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+            render(data);
+        });
+}
+
+buildWheel();
+loadLetter(currentLetter);
+</script>
+
+</body>
+</html>
