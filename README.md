@@ -25,3 +25,7 @@ Dieses Projekt ist ein einfaches Rezeptbuch mit einem radialen Suchsystem, das e
 3. Starte die Anwendung:
    ```sh
    python app.py
+
+## Preview
+
+<img src="screenshot_rezeptbuch01.png" width="800"/>
