@@ -28,4 +28,4 @@ Dieses Projekt ist ein einfaches Rezeptbuch mit einem radialen Suchsystem, das e
 
 ## Preview
 
-<img src="screenshot_rezeptbuch01.png" width="800"/>
+<img src="Screenshot_rezeptbuch01.png" width="800"/>
