@@ -1,4 +1,4 @@
-# Rezeptbuch
+# Rezeptbuch v0.1
 
 Dieses Projekt ist ein einfaches Rezeptbuch mit einem radialen Suchsystem, das es ermöglicht, Rezepte basierend auf dem ersten Buchstaben des Titels schnell zu finden.
 
