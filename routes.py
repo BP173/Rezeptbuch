@@ -1,5 +1,9 @@
 from flask import Blueprint, request, jsonify, render_template
-from models import db, Recipe, Ingredient, RecipeIngredient
+import models
+db = models.db
+Recipe = models.Recipe
+Ingredient = models.Ingredient
+RecipeIngredient = models.RecipeIngredient
 from werkzeug.exceptions import BadRequest
 
 bp = Blueprint("main", __name__)
@@ -131,3 +135,28 @@ def search_recipes():
     ).all()
 
     return jsonify(format_recipes(recipes))
+
+@bp.route('/recipe/<int:id>')
+def get_recipe(id):
+    try:
+        recipe = db.session.query(Recipe).filter_by(id=id).first()
+        if not recipe:
+            return jsonify({'error': 'Recipe not found'}), 404
+        
+        return jsonify({
+            'id': recipe.id,
+            'title': recipe.title,
+            'description': recipe.description,
+            'servings': recipe.servings,
+            'ingredients': [
+                {
+                    'id': ing.id,
+                    'name': ing.ingredient.name,
+                    'amount': ing.amount,
+                    'unit': ing.unit
+                }
+                for ing in recipe.ingredients
+            ]
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

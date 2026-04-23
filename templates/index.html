@@ -6,54 +6,122 @@
 
 <style>
 :root {
-    --bg-color: radial-gradient(circle, #0b1220, #020617);
-    --text-color: white;
-    --input-bg: #1e293b;
-    --button-bg: #2563eb;
+    --bg-color: radial-gradient(circle at top, #111827 0%, #020617 65%);
+    --text-color: #e2e8f0;
+    --muted-text: #94a3b8;
+    --card-bg: rgba(15, 23, 42, 0.92);
+    --card-border: rgba(148, 163, 184, 0.18);
+    --input-bg: #0f172a;
+    --button-bg: #3b82f6;
+    --button-hover: #2563eb;
     --button-delete-bg: #ef4444;
+    --button-delete-hover: #dc2626;
+    --shadow: 0 10px 30px rgba(2, 6, 23, 0.45);
 }
 
 body {
-    font-family: sans-serif;
+    font-family: "Segoe UI", Roboto, system-ui, sans-serif;
     background: var(--bg-color);
     color: var(--text-color);
-    padding: 20px;
+    margin: 0;
+    padding: 28px 20px;
+    line-height: 1.45;
+}
+
+h1, h2, h3 {
+    margin-top: 0;
+}
+
+h1 {
+    text-align: center;
+    letter-spacing: 0.4px;
+    margin-bottom: 12px;
+}
+
+p {
+    margin: 8px 0;
+}
+
+ul {
+    margin: 8px 0 0;
+    padding-left: 20px;
 }
 
 input, textarea {
-    margin: 5px;
-    padding: 8px;
-    border-radius: 6px;
-    border: none;
+    margin: 5px 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid transparent;
     background: var(--input-bg);
     color: var(--text-color);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus, textarea:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+textarea {
+    min-height: 90px;
+    resize: vertical;
 }
 
 button {
     margin: 5px;
-    padding: 8px 12px;
+    padding: 9px 14px;
     border: none;
-    border-radius: 6px;
+    border-radius: 10px;
     background: var(--button-bg);
     color: var(--text-color);
     cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.12s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover {
+    background: var(--button-hover);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+}
+
+button:active {
+    transform: translateY(1px);
 }
 
 .ingredient-row {
-    margin-bottom: 5px;
+    margin-bottom: 8px;
+    display: grid;
+    grid-template-columns: 1.6fr 0.9fr 0.9fr auto;
+    gap: 8px;
+    align-items: center;
 }
 
 .ingredient-row button {
     background: var(--button-delete-bg);
-    margin-left: 5px;
+    margin: 0;
+}
+
+.ingredient-row button:hover {
+    background: var(--button-delete-hover);
+    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.35);
 }
 
 .recipe {
-    background: var(--input-bg);
-    padding: 12px;
-    margin: 10px 0;
-    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.55), rgba(15, 23, 42, 0.75));
+    border: 1px solid var(--card-border);
+    padding: 16px;
+    margin: 12px 0;
+    border-radius: 16px;
     position: relative;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.recipe:hover {
+    transform: translateY(-2px);
+    border-color: rgba(59, 130, 246, 0.55);
+    box-shadow: 0 16px 30px rgba(2, 6, 23, 0.55);
 }
 
 .recipe:hover .delete-button {
@@ -64,12 +132,17 @@ button {
     display: none;
     background: var(--button-delete-bg);
     position: absolute;
-    top: 5px;
-    right: 5px;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
 }
 
 .edit-button {
-    margin-top: 10px;
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    margin-top: 0;
+    z-index: 10;
 }
 
 .radial-wrapper {
@@ -77,6 +150,38 @@ button {
     width: 300px;
     height: 300px;
     margin: 40px auto;
+    border-radius: 50%;
+    isolation: isolate;
+    touch-action: none;
+}
+
+.radial-wrapper::before {
+    content: "";
+    position: absolute;
+    inset: 30px;
+    border-radius: 50%;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.06), transparent 65%);
+    z-index: -1;
+}
+
+.radial-pointer {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 14px solid #60a5fa;
+    filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.6));
+    z-index: 3;
+}
+
+#radial {
+    position: absolute;
+    inset: 0;
 }
 
 .center-display {
@@ -91,7 +196,13 @@ button {
     justify-content: center;
     font-size: 28px;
     background: var(--button-bg);
-    box-shadow: 0 0 25px #3b82f6;
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.7);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    z-index: 2;
+}
+
+.center-display.pulse {
+    animation: centerPulse 0.35s ease;
 }
 
 .radial-item {
@@ -99,58 +210,261 @@ button {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background: #3b82f6;
+    background: #1d4ed8;
     text-align: center;
     line-height: 30px;
-    box-shadow: 0 0 10px #3b82f6;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+    user-select: none;
+    cursor: pointer;
+    transition: transform 0.18s ease, background 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.radial-item:hover {
+    background: #2563eb;
+}
+
+.radial-item.active {
+    transform: scale(1.55);
+    background: #60a5fa;
+    box-shadow: 0 0 16px rgba(96, 165, 250, 0.95);
+    opacity: 1;
+}
+
+.radial-item.inactive {
+    opacity: 0.72;
 }
 
 .search-container {
     margin-bottom: 20px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.search-container input {
+    flex: 1;
+    margin: 0;
+}
+
+.app-shell {
+    max-width: 980px;
+    margin: 0 auto;
+}
+
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 18px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.actions button {
+    margin: 0;
+}
+
+.muted {
+    color: var(--muted-text);
+}
+
+#list {
+    margin-top: 10px;
+}
+
+#detail-view {
+    margin-top: 14px;
+}
+
+.detail-actions {
+    margin-top: 20px;
+    border-top: 1px solid #334155;
+    padding-top: 10px;
+}
+
+#formContainer {
+    margin-top: 20px;
+}
+
+#formContainer input,
+#formContainer textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.secondary-btn {
+    background: #475569;
+}
+
+.secondary-btn:hover {
+    background: #334155;
+}
+
+.danger-btn {
+    background: var(--button-delete-bg);
+}
+
+.danger-btn:hover {
+    background: var(--button-delete-hover);
+    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.35);
+}
+
+.animate-in {
+    animation: fadeSlideIn 0.35s ease both;
+}
+
+.list-empty {
+    text-align: center;
+    color: var(--muted-text);
+    padding: 24px 12px;
+    border: 1px dashed rgba(148, 163, 184, 0.25);
+    border-radius: 12px;
+    margin-top: 10px;
+}
+
+#detail-ingredients-list li {
+    animation: listItemIn 0.28s ease both;
+}
+
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes listItemIn {
+    from {
+        opacity: 0;
+        transform: translateX(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes centerPulse {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 16px 12px;
+    }
+
+    .radial-wrapper {
+        transform: scale(0.9);
+        margin: 12px auto 24px;
+    }
+
+    .ingredient-row {
+        grid-template-columns: 1fr;
+    }
+
+    .edit-button,
+    .delete-button {
+        position: static;
+        display: inline-block;
+        margin-right: 8px;
+    }
 }
 </style>
 </head>
 
 <body>
-
+<div class="app-shell">
 <h1>Rezeptbuch</h1>
 
 <!-- RAD -->
 <div class="radial-wrapper">
+    <div class="radial-pointer" aria-hidden="true"></div>
     <div id="radial"></div>
     <div id="centerLetter" class="center-display" aria-label="Current Letter">A</div>
 </div>
 
 <!-- HEADER -->
-<div style="display: flex; justify-content: space-between; align-items: center;">
+<div class="section-header card">
     <h2>Rezepte</h2>
-    <button onclick="toggleForm()" aria-label="Add Recipe">+ Rezept</button>
-    <button onclick="loadAllRecipes()">Alle Rezepte anzeigen</button>
+    <div class="actions">
+        <button onclick="toggleForm()" aria-label="Add Recipe">+ Rezept</button>
+        <button onclick="loadAllRecipes()">Alle Rezepte anzeigen</button>
+    </div>
 </div>
 
 <!-- SEARCH CONTAINER -->
-<div class="search-container">
+<div class="search-container card">
     <input id="searchInput" placeholder="Suche nach Rezepten..." aria-label="Search Recipes">
     <button onclick="performSearch()">Suchen</button>
 </div>
 
+<div id="detail-view" class="card" style="display: none;">
+    <button class="back-btn" onclick="hideDetailView()">&larr; Zurück zur Übersicht</button>
+    
+    <h2 id="detail-title">Titel des Rezepts</h2>
+    <p id="detail-desc">Beschreibung...</p>
+    <p id="detail-base-servings" class="muted"></p>
+    <div style="margin-bottom: 20px;">
+        <label for="detail-servings-input"><strong>Portionen:</strong></label>
+        <input id="detail-servings-input" type="number" min="1" step="1" value="1" style="width: 90px;">
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <strong>Zutaten:</strong>
+        <ul id="detail-ingredients-list"></ul>
+    </div>
+
+    <div class="detail-actions">
+        <button onclick="edit(currentRecipeId)" class="btn-edit">Bearbeiten</button>
+        <button onclick="deleteRecipeById(currentRecipeId)" class="btn-delete danger-btn">Löschen</button>
+    </div>
+</div>
+
 <!-- FORM -->
-<div id="formContainer" style="display:none; margin-top:20px;" aria-labelledby="recipe-form">
+<div id="formContainer" class="card" style="display:none;" aria-labelledby="recipe-form">
+    <input type="hidden" id="recipeId">
     <input id="title" placeholder="Titel" aria-label="Recipe Title">
     <input id="servings" type="number" value="1" aria-label="Servings">
-    <br>
     <textarea id="desc" placeholder="Beschreibung" aria-label="Recipe Description"></textarea>
 
     <h3>Zutaten</h3>
     <div id="ingredients" aria-label="Ingredients List"></div>
 
     <button onclick="addIngredient()" aria-label="Add Ingredient">+ Zutat</button>
-    <br><br>
-    <button onclick="save()">Speichern</button>
+    <div class="form-actions">
+        <button onclick="save()" id="saveButton">Speichern</button>
+        <button onclick="toggleForm()" class="secondary-btn">Abbrechen</button>
+    </div>
 </div>
 
 <!-- LIST -->
 <div id="list" aria-labelledby="recipe-list"></div>
+</div>
 
 <script>
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
@@ -160,6 +474,9 @@ let velocity = 0;
 let isDragging = false;
 let lastAngle = 0;
 let currentLetter = "A";
+let currentRecipeId = null;
+let currentRecipeData = null;
+let wheelSnapTimer = null;
 
 const menu = document.getElementById("radial");
 const centerDisplay = document.getElementById("centerLetter");
@@ -173,6 +490,7 @@ function buildWheel() {
         const el = document.createElement("div");
         el.className = "radial-item";
         el.innerText = l;
+        el.addEventListener("click", () => setWheelToLetter(l));
         menu.appendChild(el);
     });
     updateWheel();
@@ -180,6 +498,9 @@ function buildWheel() {
 
 function updateWheel() {
     const items = document.querySelectorAll(".radial-item");
+    const targetAngle = -Math.PI / 2;
+    let activeIndex = 0;
+    let minDiff = Number.POSITIVE_INFINITY;
 
     items.forEach((item, i) => {
         const a = angle + (i / letters.length) * 2 * Math.PI;
@@ -189,17 +510,26 @@ function updateWheel() {
 
         item.style.left = `${x}px`;
         item.style.top = `${y}px`;
-
-        const diff = Math.abs(normalize(a + Math.PI / 2));
-
-        if (diff < 0.2) {
-            item.style.transform = "scale(1.6)";
-            currentLetter = item.innerText;
-        } else {
-            item.style.transform = "scale(1)";
+        const diff = Math.abs(normalize(a - targetAngle));
+        if (diff < minDiff) {
+            minDiff = diff;
+            activeIndex = i;
         }
     });
 
+    const previousLetter = currentLetter;
+    items.forEach((item, i) => {
+        const isActive = i === activeIndex;
+        item.classList.toggle("active", isActive);
+        item.classList.toggle("inactive", !isActive);
+    });
+
+    currentLetter = letters[activeIndex];
+    if (previousLetter !== currentLetter) {
+        centerDisplay.classList.remove("pulse");
+        void centerDisplay.offsetWidth;
+        centerDisplay.classList.add("pulse");
+    }
     centerDisplay.innerText = currentLetter;
 }
 
@@ -213,25 +543,94 @@ function getAngle(x, y) {
     return Math.atan2(y - center.y, x - center.x);
 }
 
-menu.addEventListener("mousedown", e => {
-    isDragging = true;
-    lastAngle = getAngle(e.offsetX, e.offsetY);
-});
+function getNearestSnapAngle(rawAngle) {
+    const step = (2 * Math.PI) / letters.length;
+    return Math.round(rawAngle / step) * step;
+}
 
-window.addEventListener("mousemove", e => {
+function animateToAngle(targetAngle, onDone = null) {
+    function anim() {
+        const diff = targetAngle - angle;
+        if (Math.abs(diff) < 0.001) {
+            angle = targetAngle;
+            updateWheel();
+            if (onDone) onDone();
+            return;
+        }
+        angle += diff * 0.2;
+        updateWheel();
+        requestAnimationFrame(anim);
+    }
+    anim();
+}
+
+function setWheelToLetter(letter) {
+    const index = letters.indexOf(letter);
+    if (index === -1) return;
+    const step = (2 * Math.PI) / letters.length;
+    const targetAngle = (-Math.PI / 2) - (index * step);
+    velocity = 0;
+    animateToAngle(targetAngle, () => loadLetter(letter));
+}
+
+function beginDrag(clientX, clientY) {
+    const r = menu.getBoundingClientRect();
+    isDragging = true;
+    lastAngle = getAngle(clientX - r.left, clientY - r.top);
+}
+
+function continueDrag(clientX, clientY) {
     if (!isDragging) return;
     const r = menu.getBoundingClientRect();
-    const a = getAngle(e.clientX - r.left, e.clientY - r.top);
+    const a = getAngle(clientX - r.left, clientY - r.top);
 
-    let d = normalize(a - lastAngle);
+    const d = normalize(a - lastAngle);
     angle += d;
     velocity = d;
     lastAngle = a;
-
     updateWheel();
+}
+
+menu.addEventListener("mousedown", e => {
+    beginDrag(e.clientX, e.clientY);
+});
+
+window.addEventListener("mousemove", e => {
+    continueDrag(e.clientX, e.clientY);
 });
 
 window.addEventListener("mouseup", end);
+menu.addEventListener("mouseleave", end);
+
+menu.addEventListener("touchstart", e => {
+    if (!e.touches.length) return;
+    const t = e.touches[0];
+    beginDrag(t.clientX, t.clientY);
+}, { passive: true });
+
+menu.addEventListener("touchmove", e => {
+    if (!e.touches.length) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    continueDrag(t.clientX, t.clientY);
+}, { passive: false });
+
+menu.addEventListener("touchend", end, { passive: true });
+menu.addEventListener("touchcancel", end, { passive: true });
+
+menu.addEventListener("wheel", e => {
+    e.preventDefault();
+    angle += e.deltaY * 0.004;
+    velocity = 0;
+    updateWheel();
+
+    if (wheelSnapTimer) {
+        clearTimeout(wheelSnapTimer);
+    }
+    wheelSnapTimer = setTimeout(() => {
+        snap();
+    }, 140);
+}, { passive: false });
 
 function end() {
     if (!isDragging) return;
@@ -250,30 +649,15 @@ function inertia() {
 }
 
 function snap() {
-    const step = (2 * Math.PI) / letters.length;
-    const target = Math.round(angle / step) * step;
-
-    function anim() {
-        let diff = target - angle;
-
-        if (Math.abs(diff) < 0.001) {
-            angle = target;
-            updateWheel();
-            loadLetter(currentLetter);
-            return;
-        }
-
-        angle += diff * 0.2;
-        updateWheel();
-        requestAnimationFrame(anim);
-    }
-    anim();
+    const target = getNearestSnapAngle(angle);
+    animateToAngle(target, () => loadLetter(currentLetter));
 }
 
 function loadLetter(letter) {
     fetch(`/recipes/${letter}`)
         .then(res => res.json())
         .then(data => {
+            hideDetailView();
             render(data);
         });
 }
@@ -281,13 +665,27 @@ function loadLetter(letter) {
 function toggleForm() {
     const formContainer = document.getElementById("formContainer");
     if (formContainer.style.display === "none") {
+        // Formular anzeigen
         formContainer.style.display = "block";
+        
+        // Prüfen, ob wir im "Bearbeiten"-Modus sind
+        const recipeId = document.getElementById("recipeId").value;
+        if (!recipeId) {
+            // Neueingabe-Modus - alle Felder leeren
+            document.getElementById("recipeId").value = "";
+            document.getElementById("title").value = "";
+            document.getElementById("desc").value = "";
+            document.getElementById("servings").value = "1";
+            document.getElementById("ingredients").innerHTML = "";
+            document.getElementById("saveButton").innerText = "Speichern";
+        }
     } else {
+        // Formular ausblenden
         formContainer.style.display = "none";
     }
 }
 
-function addIngredient() {
+function addIngredient(name = '', amount = 0, unit = '') {
     const ingredientsDiv = document.getElementById("ingredients");
     const ingredientInput = document.createElement("div");
     ingredientInput.className = "ingredient-row";
@@ -295,15 +693,18 @@ function addIngredient() {
     const nameInput = document.createElement("input");
     nameInput.placeholder = "Name";
     nameInput.ariaLabel = "Ingredient Name";
+    nameInput.value = name;
 
     const amountInput = document.createElement("input");
     amountInput.type = "number";
     amountInput.placeholder = "Menge";
     amountInput.ariaLabel = "Ingredient Amount";
+    amountInput.value = amount;
 
     const unitInput = document.createElement("input");
     unitInput.placeholder = "Einheit";
     unitInput.ariaLabel = "Ingredient Unit";
+    unitInput.value = unit;
 
     const deleteButton = document.createElement("button");
     deleteButton.innerText = "-";
@@ -320,6 +721,7 @@ function addIngredient() {
 }
 
 function save() {
+    const recipeId = document.getElementById("recipeId").value;
     const title = document.getElementById("title").value;
     const servings = parseInt(document.getElementById("servings").value, 10);
     const description = document.getElementById("desc").value;
@@ -331,8 +733,20 @@ function save() {
         unit: child.querySelector('input[placeholder="Einheit"]').value
     }));
 
-    fetch("/add", {
-        method: "POST",
+    let url, method;
+    
+    if (recipeId) {
+        // Bearbeiten eines bestehenden Rezepts
+        url = `/update/${recipeId}`;
+        method = "PUT";
+    } else {
+        // Neues Rezept erstellen
+        url = "/add";
+        method = "POST";
+    }
+
+    fetch(url, {
+        method: method,
         headers: {
             "Content-Type": "application/json"
         },
@@ -344,23 +758,169 @@ function save() {
         })
     }).then(res => res.json())
       .then(data => {
-          if (data.status === "ok") {
-              alert("Rezept erfolgreich gespeichert!");
+          if (data.status === "ok" || data.status === "updated") {
+              alert(data.status === "ok" ? "Rezept erfolgreich gespeichert!" : "Rezept erfolgreich aktualisiert!");
+              document.getElementById("recipeId").value = ""; // ID zurücksetzen
+              document.getElementById("title").value = ""; // Felder leeren
+              document.getElementById("desc").value = "";
+              document.getElementById("servings").value = "1";
+              document.getElementById("ingredients").innerHTML = ""; // Zutaten zurücksetzen
+              document.getElementById("saveButton").innerText = "Speichern"; // Button-Text zurücksetzen
               toggleForm();
               loadLetter(currentLetter);
           } else {
-              alert("Fehler beim Speichern des Rezepts.");
+              alert(data.message || "Fehler beim Speichern/Ändern des Rezepts.");
           }
+      })
+      .catch(error => {
+          console.error('Error:', error);
+          alert('Ein Fehler ist aufgetreten');
       });
+}
+
+function edit(id) {
+    hideDetailView();
+    fetch(`/recipe/${id}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                alert('Rezept nicht gefunden');
+                return;
+            }
+            
+            const recipe = data;
+            document.getElementById("recipeId").value = recipe.id;
+            document.getElementById("title").value = recipe.title;
+            document.getElementById("servings").value = recipe.servings;
+            document.getElementById("desc").value = recipe.description;
+
+            // Zutatenfeld leeren und mit neuen Zutaten füllen
+            const ingredientsDiv = document.getElementById("ingredients");
+            ingredientsDiv.innerHTML = "";
+            recipe.ingredients.forEach(ingredient => {
+                addIngredient(ingredient.name, ingredient.amount, ingredient.unit);
+            });
+
+            // Speichern-Button Text ändern
+            document.getElementById("saveButton").innerText = "Aktualisieren";
+            
+            // Formular anzeigen
+            toggleForm();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Fehler beim Laden des Rezepts');
+        });
+}
+
+function showRecipeDetail(id) {
+    fetch(`/recipe/${id}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                alert('Rezept nicht gefunden');
+                return;
+            }
+
+            currentRecipeId = data.id;
+            currentRecipeData = data;
+
+            document.getElementById("list").style.display = "none";
+            const detailView = document.getElementById("detail-view");
+            detailView.style.display = "block";
+            detailView.classList.remove("animate-in");
+            void detailView.offsetWidth;
+            detailView.classList.add("animate-in");
+            document.getElementById("detail-title").innerText = data.title;
+            document.getElementById("detail-desc").innerText = data.description || "Keine Beschreibung vorhanden.";
+            document.getElementById("detail-base-servings").innerText = `Basis-Portionen: ${data.servings}`;
+
+            const servingsInput = document.getElementById("detail-servings-input");
+            servingsInput.value = data.servings;
+            renderDetailIngredients(data.servings);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Fehler beim Laden der Detailansicht');
+        });
+}
+
+function hideDetailView() {
+    document.getElementById("detail-view").style.display = "none";
+    document.getElementById("list").style.display = "block";
+    currentRecipeId = null;
+    currentRecipeData = null;
+}
+
+function formatAmount(amount) {
+    if (Number.isInteger(amount)) {
+        return amount.toString();
+    }
+    return amount.toFixed(2).replace(/\.?0+$/, '');
+}
+
+function renderDetailIngredients(targetServings) {
+    if (!currentRecipeData) return;
+
+    const baseServings = currentRecipeData.servings || 1;
+    const ratio = targetServings / baseServings;
+    const ingredientsList = document.getElementById("detail-ingredients-list");
+    ingredientsList.innerHTML = "";
+
+    currentRecipeData.ingredients.forEach(ingredient => {
+        const ingredientItem = document.createElement("li");
+        const scaledAmount = ingredient.amount * ratio;
+        ingredientItem.innerText = `${formatAmount(scaledAmount)} ${ingredient.unit} ${ingredient.name}`;
+        ingredientItem.style.animationDelay = `${ingredientsList.children.length * 35}ms`;
+        ingredientsList.appendChild(ingredientItem);
+    });
+}
+
+function deleteRecipeById(id) {
+    if (!confirm("Möchtest du dieses Rezept wirklich löschen?")) {
+        return;
+    }
+
+    fetch(`/delete/${id}`, { method: "DELETE" })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "deleted") {
+                alert("Rezept erfolgreich gelöscht!");
+                hideDetailView();
+                loadLetter(currentLetter);
+            } else {
+                alert("Fehler beim Löschen des Rezepts.");
+            }
+        });
 }
 
 function render(recipes) {
     const listDiv = document.getElementById("list");
     listDiv.innerHTML = "";
+    listDiv.classList.remove("animate-in");
+    void listDiv.offsetWidth;
+    listDiv.classList.add("animate-in");
 
-    recipes.forEach(recipe => {
+    if (!recipes.length) {
+        const emptyState = document.createElement("div");
+        emptyState.className = "list-empty";
+        emptyState.innerText = "Keine Rezepte gefunden. Probiere eine andere Suche oder einen anderen Buchstaben.";
+        listDiv.appendChild(emptyState);
+        return;
+    }
+
+    recipes.forEach((recipe, index) => {
         const recipeDiv = document.createElement("div");
         recipeDiv.className = "recipe";
+        recipeDiv.classList.add("animate-in");
+        recipeDiv.style.animationDelay = `${index * 35}ms`;
+        recipeDiv.style.cursor = "pointer";
+        recipeDiv.onclick = function(event) {
+            if (event.target.closest("button")) {
+                return;
+            }
+            showRecipeDetail(recipe.id);
+        };
 
         const title = document.createElement("h3");
         title.innerText = recipe.title;
@@ -382,8 +942,7 @@ function render(recipes) {
         editButton.className = "edit-button";
         editButton.innerText = "Bearbeiten";
         editButton.onclick = function() {
-            // Implementiere die Bearbeitungsfunktion hier
-            alert(`Rezept "${recipe.title}" bearbeiten`);
+            edit(recipe.id);
         };
 
         const deleteButton = document.createElement("button");
@@ -419,6 +978,7 @@ function loadAllRecipes() {
     fetch("/recipes")
         .then(res => res.json())
         .then(data => {
+            hideDetailView();
             render(data);
         });
 }
@@ -428,9 +988,18 @@ function performSearch() {
     fetch(`/search?query=${encodeURIComponent(query)}`)
         .then(res => res.json())
         .then(data => {
+            hideDetailView();
             render(data);
         });
 }
+
+document.getElementById("detail-servings-input").addEventListener("input", function(event) {
+    const value = parseInt(event.target.value, 10);
+    if (!Number.isFinite(value) || value < 1) {
+        return;
+    }
+    renderDetailIngredients(value);
+});
 
 buildWheel();
 loadLetter(currentLetter);
