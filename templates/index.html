@@ -32,10 +32,12 @@ h1, h2, h3 {
     margin-top: 0;
 }
 
-h1 {
+#admin-panel .app-heading {
     text-align: center;
     letter-spacing: 0.4px;
-    margin-bottom: 12px;
+    margin: 0 0 8px;
+    font-size: 1.75rem;
+    font-weight: 700;
 }
 
 p {
@@ -328,6 +330,32 @@ button:active {
     box-shadow: 0 6px 16px rgba(220, 38, 38, 0.35);
 }
 
+.hidden {
+    display: none !important;
+}
+
+.admin-panel {
+    margin-bottom: 16px;
+}
+
+.admin-panel .muted {
+    display: block;
+    margin-top: 4px;
+}
+
+.admin-login-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.admin-login-row input[type="password"] {
+    max-width: 220px;
+    margin: 0;
+}
+
 .animate-in {
     animation: fadeSlideIn 0.35s ease both;
 }
@@ -399,7 +427,19 @@ button:active {
 
 <body>
 <div class="app-shell">
-<h1>Rezeptbuch</h1>
+
+<div id="admin-panel" class="card admin-panel">
+    <h1 class="app-heading">Rezeptbuch</h1>
+    <span class="muted">Rezepte hinzufügen, bearbeiten und löschen</span>
+    <div id="admin-login-fields" class="admin-login-row">
+        <input type="password" id="adminPassword" placeholder="Passwort" autocomplete="current-password" aria-label="Passwort zum Bearbeiten">
+        <button type="button" onclick="adminLogin()">Anmelden</button>
+    </div>
+    <div id="admin-logged-in" class="admin-login-row hidden">
+        <span class="muted">Angemeldet</span>
+        <button type="button" onclick="adminLogout()" class="secondary-btn">Abmelden</button>
+    </div>
+</div>
 
 <!-- RAD -->
 <div class="radial-wrapper">
@@ -412,8 +452,8 @@ button:active {
 <div class="section-header card">
     <h2>Rezepte</h2>
     <div class="actions">
-        <button onclick="toggleForm()" aria-label="Add Recipe">+ Rezept</button>
-        <button onclick="loadAllRecipes()">Alle Rezepte anzeigen</button>
+        <button type="button" class="admin-only hidden" onclick="toggleForm()" aria-label="Add Recipe">+ Rezept</button>
+        <button type="button" onclick="loadAllRecipes()">Alle Rezepte anzeigen</button>
     </div>
 </div>
 
@@ -439,9 +479,9 @@ button:active {
         <ul id="detail-ingredients-list"></ul>
     </div>
 
-    <div class="detail-actions">
-        <button onclick="edit(currentRecipeId)" class="btn-edit">Bearbeiten</button>
-        <button onclick="deleteRecipeById(currentRecipeId)" class="btn-delete danger-btn">Löschen</button>
+    <div class="detail-actions admin-only hidden">
+        <button type="button" onclick="edit(currentRecipeId)" class="btn-edit">Bearbeiten</button>
+        <button type="button" onclick="deleteRecipeById(currentRecipeId)" class="btn-delete danger-btn">Löschen</button>
     </div>
 </div>
 
@@ -468,6 +508,76 @@ button:active {
 
 <script>
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+let isAdmin = false;
+
+function apiFetch(url, options = {}) {
+    const headers = { ...(options.headers || {}) };
+    if (options.body && typeof options.body === "string" && !headers["Content-Type"]) {
+        headers["Content-Type"] = "application/json";
+    }
+    return fetch(url, { credentials: "include", ...options, headers });
+}
+
+function updateAdminUI() {
+    document.querySelectorAll(".admin-only").forEach(el => {
+        el.classList.toggle("hidden", !isAdmin);
+    });
+    const loginFields = document.getElementById("admin-login-fields");
+    const loggedIn = document.getElementById("admin-logged-in");
+    if (loginFields) loginFields.classList.toggle("hidden", isAdmin);
+    if (loggedIn) loggedIn.classList.toggle("hidden", !isAdmin);
+}
+
+function refreshAdminStatus() {
+    return apiFetch("/admin/status")
+        .then(res => res.json())
+        .then(data => {
+            isAdmin = !!data.authenticated;
+            updateAdminUI();
+        })
+        .catch(() => {
+            isAdmin = false;
+            updateAdminUI();
+        });
+}
+
+function adminLogin() {
+    const pw = document.getElementById("adminPassword").value;
+    apiFetch("/admin/login", {
+        method: "POST",
+        body: JSON.stringify({ password: pw })
+    })
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+            if (ok) {
+                document.getElementById("adminPassword").value = "";
+                isAdmin = true;
+                updateAdminUI();
+                refreshAdminStatus();
+            } else {
+                alert(data.error || "Anmeldung fehlgeschlagen");
+            }
+        })
+        .catch(() => alert("Anmeldung fehlgeschlagen"));
+}
+
+function adminLogout() {
+    apiFetch("/admin/logout", { method: "POST" })
+        .then(() => refreshAdminStatus())
+        .then(() => {
+            const form = document.getElementById("formContainer");
+            if (form && form.style.display !== "none") {
+                form.style.display = "none";
+            }
+        });
+}
+
+function handleUnauthorized() {
+    isAdmin = false;
+    updateAdminUI();
+    alert("Nicht angemeldet oder Sitzung abgelaufen. Bitte erneut als Admin anmelden.");
+}
 
 let angle = 0;
 let velocity = 0;
@@ -654,7 +764,7 @@ function snap() {
 }
 
 function loadLetter(letter) {
-    fetch(`/recipes/${letter}`)
+    apiFetch(`/recipes/${letter}`)
         .then(res => res.json())
         .then(data => {
             hideDetailView();
@@ -665,6 +775,10 @@ function loadLetter(letter) {
 function toggleForm() {
     const formContainer = document.getElementById("formContainer");
     if (formContainer.style.display === "none") {
+        if (!isAdmin) {
+            alert("Bitte zuerst als Admin anmelden.");
+            return;
+        }
         // Formular anzeigen
         formContainer.style.display = "block";
         
@@ -745,31 +859,40 @@ function save() {
         method = "POST";
     }
 
-    fetch(url, {
+    if (!isAdmin) {
+        alert("Bitte zuerst als Admin anmelden.");
+        return;
+    }
+
+    apiFetch(url, {
         method: method,
-        headers: {
-            "Content-Type": "application/json"
-        },
         body: JSON.stringify({
             title,
             description,
             servings,
             ingredients
         })
-    }).then(res => res.json())
+    }).then(res => {
+        if (res.status === 401) {
+            handleUnauthorized();
+            return null;
+        }
+        return res.json();
+    })
       .then(data => {
+          if (!data) return;
           if (data.status === "ok" || data.status === "updated") {
               alert(data.status === "ok" ? "Rezept erfolgreich gespeichert!" : "Rezept erfolgreich aktualisiert!");
-              document.getElementById("recipeId").value = ""; // ID zurücksetzen
-              document.getElementById("title").value = ""; // Felder leeren
+              document.getElementById("recipeId").value = ""; 
+              document.getElementById("title").value = ""; 
               document.getElementById("desc").value = "";
               document.getElementById("servings").value = "1";
-              document.getElementById("ingredients").innerHTML = ""; // Zutaten zurücksetzen
-              document.getElementById("saveButton").innerText = "Speichern"; // Button-Text zurücksetzen
+              document.getElementById("ingredients").innerHTML = ""; 
+              document.getElementById("saveButton").innerText = "Speichern"; 
               toggleForm();
               loadLetter(currentLetter);
           } else {
-              alert(data.message || "Fehler beim Speichern/Ändern des Rezepts.");
+              alert(data.message || data.error || "Fehler beim Speichern/Ändern des Rezepts.");
           }
       })
       .catch(error => {
@@ -779,8 +902,12 @@ function save() {
 }
 
 function edit(id) {
+    if (!isAdmin) {
+        alert("Bitte zuerst als Admin anmelden.");
+        return;
+    }
     hideDetailView();
-    fetch(`/recipe/${id}`)
+    apiFetch(`/recipe/${id}`)
         .then(res => res.json())
         .then(data => {
             if (data.error) {
@@ -814,7 +941,7 @@ function edit(id) {
 }
 
 function showRecipeDetail(id) {
-    fetch(`/recipe/${id}`)
+    apiFetch(`/recipe/${id}`)
         .then(res => res.json())
         .then(data => {
             if (data.error) {
@@ -838,6 +965,7 @@ function showRecipeDetail(id) {
             const servingsInput = document.getElementById("detail-servings-input");
             servingsInput.value = data.servings;
             renderDetailIngredients(data.servings);
+            updateAdminUI();
         })
         .catch(error => {
             console.error('Error:', error);
@@ -877,19 +1005,30 @@ function renderDetailIngredients(targetServings) {
 }
 
 function deleteRecipeById(id) {
+    if (!isAdmin) {
+        alert("Bitte zuerst als Admin anmelden.");
+        return;
+    }
     if (!confirm("Möchtest du dieses Rezept wirklich löschen?")) {
         return;
     }
 
-    fetch(`/delete/${id}`, { method: "DELETE" })
-        .then(res => res.json())
+    apiFetch(`/delete/${id}`, { method: "DELETE" })
+        .then(res => {
+            if (res.status === 401) {
+                handleUnauthorized();
+                return null;
+            }
+            return res.json();
+        })
         .then(data => {
+            if (!data) return;
             if (data.status === "deleted") {
                 alert("Rezept erfolgreich gelöscht!");
                 hideDetailView();
                 loadLetter(currentLetter);
             } else {
-                alert("Fehler beim Löschen des Rezepts.");
+                alert(data.error || "Fehler beim Löschen des Rezepts.");
             }
         });
 }
@@ -906,6 +1045,7 @@ function render(recipes) {
         emptyState.className = "list-empty";
         emptyState.innerText = "Keine Rezepte gefunden. Probiere eine andere Suche oder einen anderen Buchstaben.";
         listDiv.appendChild(emptyState);
+        updateAdminUI();
         return;
     }
 
@@ -939,25 +1079,38 @@ function render(recipes) {
         });
 
         const editButton = document.createElement("button");
-        editButton.className = "edit-button";
+        editButton.type = "button";
+        editButton.className = "edit-button admin-only hidden";
         editButton.innerText = "Bearbeiten";
         editButton.onclick = function() {
             edit(recipe.id);
         };
 
         const deleteButton = document.createElement("button");
-        deleteButton.className = "delete-button";
+        deleteButton.type = "button";
+        deleteButton.className = "delete-button admin-only hidden";
         deleteButton.innerText = "Löschen";
         deleteButton.onclick = function() {
+            if (!isAdmin) {
+                alert("Bitte zuerst als Admin anmelden.");
+                return;
+            }
             if (confirm(`Möchtest du das Rezept "${recipe.title}" wirklich löschen?`)) {
-                fetch(`/delete/${recipe.id}`, { method: "DELETE" })
-                    .then(res => res.json())
+                apiFetch(`/delete/${recipe.id}`, { method: "DELETE" })
+                    .then(res => {
+                        if (res.status === 401) {
+                            handleUnauthorized();
+                            return null;
+                        }
+                        return res.json();
+                    })
                     .then(data => {
+                        if (!data) return;
                         if (data.status === "deleted") {
                             alert("Rezept erfolgreich gelöscht!");
                             loadLetter(currentLetter);
                         } else {
-                            alert("Fehler beim Löschen des Rezepts.");
+                            alert(data.error || "Fehler beim Löschen des Rezepts.");
                         }
                     });
             }
@@ -972,10 +1125,11 @@ function render(recipes) {
 
         listDiv.appendChild(recipeDiv);
     });
+    updateAdminUI();
 }
 
 function loadAllRecipes() {
-    fetch("/recipes")
+    apiFetch("/recipes")
         .then(res => res.json())
         .then(data => {
             hideDetailView();
@@ -985,7 +1139,7 @@ function loadAllRecipes() {
 
 function performSearch() {
     const query = document.getElementById("searchInput").value;
-    fetch(`/search?query=${encodeURIComponent(query)}`)
+    apiFetch(`/search?query=${encodeURIComponent(query)}`)
         .then(res => res.json())
         .then(data => {
             hideDetailView();
@@ -1001,8 +1155,15 @@ document.getElementById("detail-servings-input").addEventListener("input", funct
     renderDetailIngredients(value);
 });
 
+document.getElementById("adminPassword").addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        adminLogin();
+    }
+});
+
 buildWheel();
-loadLetter(currentLetter);
+refreshAdminStatus().then(() => loadLetter(currentLetter));
 </script>
 
 </body>

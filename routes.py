@@ -1,4 +1,6 @@
-from flask import Blueprint, request, jsonify, render_template
+from functools import wraps
+
+from flask import Blueprint, request, jsonify, render_template, session, current_app
 import models
 db = models.db
 Recipe = models.Recipe
@@ -8,11 +10,48 @@ from werkzeug.exceptions import BadRequest
 
 bp = Blueprint("main", __name__)
 
+ADMIN_SESSION_KEY = "admin_ok"
+
+
+def admin_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session.get(ADMIN_SESSION_KEY):
+            return jsonify({"error": "Unauthorized", "status": "unauthorized"}), 401
+        return view(*args, **kwargs)
+    return wrapped
+
+
 @bp.route("/")
 def home():
     return render_template("index.html")
 
+
+@bp.route("/admin/status", methods=["GET"])
+def admin_status():
+    return jsonify({"authenticated": bool(session.get(ADMIN_SESSION_KEY))})
+
+
+@bp.route("/admin/login", methods=["POST"])
+def admin_login():
+    data = request.get_json(silent=True) or {}
+    password = data.get("password", "")
+    expected = current_app.config.get("ADMIN_PASSWORD") or ""
+    if password and password == expected:
+        session[ADMIN_SESSION_KEY] = True
+        session.permanent = True
+        return jsonify({"status": "ok"})
+    return jsonify({"error": "Invalid password"}), 401
+
+
+@bp.route("/admin/logout", methods=["POST"])
+def admin_logout():
+    session.pop(ADMIN_SESSION_KEY, None)
+    return jsonify({"status": "ok"})
+
+
 @bp.route("/add", methods=["POST"])
+@admin_required
 def add_recipe():
     data = request.json
 
@@ -81,6 +120,7 @@ def format_recipes(recipes):
     return result
 
 @bp.route("/update/<int:id>", methods=["PUT"])
+@admin_required
 def update_recipe(id):
     data = request.json
 
@@ -116,16 +156,17 @@ def update_recipe(id):
         db.session.add(ri)
 
     db.session.commit()
-    return {"status": "updated"}
+    return jsonify({"status": "updated"})
 
 @bp.route("/delete/<int:id>", methods=["DELETE"])
+@admin_required
 def delete_recipe(id):
     recipe = Recipe.query.get_or_404(id)
 
     db.session.delete(recipe)
     db.session.commit()
 
-    return {"status": "deleted"}
+    return jsonify({"status": "deleted"})
 
 @bp.route("/search", methods=["GET"])  # Ensure this route is added to the blueprint
 def search_recipes():
