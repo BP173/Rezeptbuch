@@ -10,14 +10,17 @@ def create_app():
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-change-for-production')
     app.config['ADMIN_PASSWORD'] = os.environ.get('ADMIN_PASSWORD', 'voodrok')
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=14)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///recipes.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+        'DATABASE_URL',
+        'sqlite:///recipes.db',
+    )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
 
     with app.app_context():
         db.create_all()
 
-    app.register_blueprint(main_bp)  # Ensure the blueprint is registered
+    app.register_blueprint(main_bp)
 
     return app
 

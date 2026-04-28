@@ -1,0 +1,20 @@
+# Im geklonten Repo ausführen: cp .env.example .env && Editor .env && docker compose up -d --build
+# Integration unter n8n-docker-caddy: Unterordner ./rezeptbuch mit diesem Repo füllen und dort
+#   build: ./rezeptbuch
+#   env_file: ./rezeptbuch/.env
+# verwenden (siehe Antwort im Chat).
+
+services:
+  rezeptbuch:
+    build: .
+    container_name: rezeptbuch
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - rezeptbuch_data:/data
+    expose:
+      - "8000"
+
+volumes:
+  rezeptbuch_data:
