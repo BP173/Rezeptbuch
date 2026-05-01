@@ -22,38 +22,28 @@ def admin_required(view):
     return wrapped
 
 
-@bp.route("/")
-def home():
-    return render_template("index.html")
+def api_key_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        expected_key = current_app.config.get("API_ADD_KEY", "")
+        if not expected_key:
+            return jsonify({"error": "API key not configured", "status": "misconfigured"}), 503
+
+        provided_key = request.headers.get("X-API-Key", "")
+        if not provided_key:
+            auth_header = request.headers.get("Authorization", "")
+            if auth_header.startswith("Bearer "):
+                provided_key = auth_header.split(" ", 1)[1].strip()
+
+        if provided_key != expected_key:
+            return jsonify({"error": "Unauthorized", "status": "unauthorized"}), 401
+        return view(*args, **kwargs)
+    return wrapped
 
 
-@bp.route("/admin/status", methods=["GET"])
-def admin_status():
-    return jsonify({"authenticated": bool(session.get(ADMIN_SESSION_KEY))})
-
-
-@bp.route("/admin/login", methods=["POST"])
-def admin_login():
-    data = request.get_json(silent=True) or {}
-    password = data.get("password", "")
-    expected = current_app.config.get("ADMIN_PASSWORD") or ""
-    if password and password == expected:
-        session[ADMIN_SESSION_KEY] = True
-        session.permanent = True
-        return jsonify({"status": "ok"})
-    return jsonify({"error": "Invalid password"}), 401
-
-
-@bp.route("/admin/logout", methods=["POST"])
-def admin_logout():
-    session.pop(ADMIN_SESSION_KEY, None)
-    return jsonify({"status": "ok"})
-
-
-@bp.route("/add", methods=["POST"])
-@admin_required
-def add_recipe():
-    data = request.json
+def create_recipe_from_payload(data):
+    if not isinstance(data, dict):
+        raise BadRequest("Invalid JSON payload")
 
     if not all(key in data for key in ["title", "ingredients"]):
         raise BadRequest("Missing required fields")
@@ -87,7 +77,51 @@ def add_recipe():
         db.session.add(ri)
 
     db.session.commit()
+    return recipe
+
+
+@bp.route("/")
+def home():
+    return render_template("index.html")
+
+
+@bp.route("/admin/status", methods=["GET"])
+def admin_status():
+    return jsonify({"authenticated": bool(session.get(ADMIN_SESSION_KEY))})
+
+
+@bp.route("/admin/login", methods=["POST"])
+def admin_login():
+    data = request.get_json(silent=True) or {}
+    password = data.get("password", "")
+    expected = current_app.config.get("ADMIN_PASSWORD") or ""
+    if password and password == expected:
+        session[ADMIN_SESSION_KEY] = True
+        session.permanent = True
+        return jsonify({"status": "ok"})
+    return jsonify({"error": "Invalid password"}), 401
+
+
+@bp.route("/admin/logout", methods=["POST"])
+def admin_logout():
+    session.pop(ADMIN_SESSION_KEY, None)
     return jsonify({"status": "ok"})
+
+
+@bp.route("/add", methods=["POST"])
+@admin_required
+def add_recipe():
+    data = request.get_json(silent=True)
+    recipe = create_recipe_from_payload(data)
+    return jsonify({"status": "ok", "id": recipe.id})
+
+
+@bp.route("/api/add", methods=["POST"])
+@api_key_required
+def api_add_recipe():
+    data = request.get_json(silent=True)
+    recipe = create_recipe_from_payload(data)
+    return jsonify({"status": "ok", "id": recipe.id})
 
 @bp.route("/recipes")
 def get_recipes():
