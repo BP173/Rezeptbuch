@@ -2,6 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Rezeptbuch</title>
 
 <style>
@@ -17,6 +18,10 @@
     --button-delete-bg: #ef4444;
     --button-delete-hover: #dc2626;
     --shadow: 0 10px 30px rgba(2, 6, 23, 0.45);
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
 }
 
 body {
@@ -24,20 +29,12 @@ body {
     background: var(--bg-color);
     color: var(--text-color);
     margin: 0;
-    padding: 28px 20px;
+    padding: calc(28px + var(--safe-top)) calc(20px + var(--safe-right)) calc(28px + var(--safe-bottom)) calc(20px + var(--safe-left));
     line-height: 1.45;
 }
 
 h1, h2, h3 {
     margin-top: 0;
-}
-
-#admin-panel .app-heading {
-    text-align: center;
-    letter-spacing: 0.4px;
-    margin: 0 0 8px;
-    font-size: 1.75rem;
-    font-weight: 700;
 }
 
 p {
@@ -120,6 +117,66 @@ button:active {
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+#list.recipe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    align-items: stretch;
+}
+
+#list.recipe-grid .recipe {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+    padding-bottom: 52px;
+}
+
+.recipe-card-title {
+    margin: 0 0 10px;
+    font-size: 1.15rem;
+    line-height: 1.3;
+    padding-right: 36px;
+}
+
+.recipe-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.recipe-card-badge {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.18);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.recipe-card-preview {
+    margin: 0 0 10px;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    color: var(--text-color);
+    opacity: 0.92;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.recipe-card-ingredients {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: var(--muted-text);
+    flex: 1;
+}
+
 .recipe:hover {
     transform: translateY(-2px);
     border-color: rgba(59, 130, 246, 0.55);
@@ -155,6 +212,12 @@ button:active {
     border-radius: 50%;
     isolation: isolate;
     touch-action: none;
+    outline: none;
+}
+
+.radial-wrapper:focus-visible {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.45);
+    border-radius: 50%;
 }
 
 .radial-wrapper::before {
@@ -207,17 +270,25 @@ button:active {
     animation: centerPulse 0.35s ease;
 }
 
+.center-display,
+.radial-pointer {
+    pointer-events: none;
+}
+
 .radial-item {
     position: absolute;
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: #1d4ed8;
     text-align: center;
-    line-height: 30px;
+    line-height: 32px;
+    font-size: 0.82rem;
+    font-weight: 600;
     box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
     user-select: none;
     cursor: pointer;
+    transform: translate(-50%, -50%);
     transition: transform 0.18s ease, background 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 
@@ -225,15 +296,49 @@ button:active {
     background: #2563eb;
 }
 
+.radial-item:focus {
+    outline: none;
+}
+
+.radial-item:focus-visible {
+    box-shadow: 0 0 0 2px #e2e8f0, 0 0 12px rgba(59, 130, 246, 0.85);
+    z-index: 4;
+}
+
 .radial-item.active {
-    transform: scale(1.55);
+    transform: translate(-50%, -50%) scale(1.5);
     background: #60a5fa;
     box-shadow: 0 0 16px rgba(96, 165, 250, 0.95);
     opacity: 1;
 }
 
 .radial-item.inactive {
+    opacity: 0.68;
+}
+
+.radial-item.radial-item--await {
+    opacity: 0.52;
+}
+
+.radial-item.radial-item--await:hover {
     opacity: 0.72;
+}
+
+.center-display.center-display--neutral {
+    font-size: 1.65rem;
+    font-weight: 300;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    box-shadow: 0 0 18px rgba(148, 163, 184, 0.25);
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .radial-item {
+        width: 40px;
+        height: 40px;
+        line-height: 40px;
+        font-size: 0.9rem;
+    }
 }
 
 .search-container {
@@ -251,6 +356,52 @@ button:active {
 .app-shell {
     max-width: 980px;
     margin: 0 auto;
+    padding-bottom: var(--app-bottom-pad, 0px);
+}
+
+.bottom-nav {
+    display: none;
+}
+
+.bottom-nav__item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 48px;
+    margin: 0;
+    padding: 6px 4px;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--muted-text);
+    font-size: 0.72rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.bottom-nav__item:hover {
+    background: rgba(59, 130, 246, 0.12);
+    color: var(--text-color);
+}
+
+.bottom-nav__item:focus-visible {
+    outline: 2px solid #60a5fa;
+    outline-offset: 2px;
+    color: var(--text-color);
+}
+
+.bottom-nav__item--active {
+    color: #93c5fd;
+    background: rgba(59, 130, 246, 0.22);
+}
+
+.scroll-anchor {
+    scroll-margin-top: calc(12px + var(--safe-top));
 }
 
 .card {
@@ -287,8 +438,57 @@ button:active {
     margin-top: 10px;
 }
 
+@media (max-width: 600px) {
+    #list.recipe-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 #detail-view {
     margin-top: 14px;
+}
+
+.app-shell[data-app-mode="browse"] #detail-view {
+    display: none !important;
+}
+
+.app-shell[data-app-mode="detail"] #overview-mode {
+    display: none;
+}
+
+.app-shell[data-app-mode="detail"] #detail-view {
+    display: block;
+    margin-top: 0;
+}
+
+.app-mode-banner {
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.app-mode-banner--browse {
+    margin-top: 4px;
+}
+
+.app-mode-banner__eyebrow {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #93c5fd;
+    margin-bottom: 4px;
+}
+
+.app-mode-banner__line {
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.back-btn {
+    margin: 0 0 14px;
+    padding: 10px 14px;
 }
 
 .detail-actions {
@@ -334,26 +534,150 @@ button:active {
     display: none !important;
 }
 
-.admin-panel {
-    margin-bottom: 16px;
+.app-brand {
+    text-align: center;
+    padding: 8px 4px 20px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    margin-bottom: 6px;
 }
 
-.admin-panel .muted {
+.app-brand__title {
+    margin: 0;
+    font-size: clamp(1.5rem, 4vw, 1.85rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: #f1f5f9;
+}
+
+.admin-card {
+    margin-top: 18px;
+    margin-bottom: 4px;
+    padding: 18px 18px 16px;
+    border: 1px solid rgba(59, 130, 246, 0.22);
+    background: linear-gradient(165deg, rgba(30, 58, 138, 0.35), rgba(15, 23, 42, 0.88));
+}
+
+.admin-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.admin-card__title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.admin-card__badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.admin-card__badge--out {
+    color: #94a3b8;
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(148, 163, 184, 0.25);
+}
+
+.admin-card__badge--in {
+    color: #bbf7d0;
+    background: rgba(22, 101, 52, 0.45);
+    border-color: rgba(74, 222, 128, 0.35);
+}
+
+.admin-card__lead {
+    margin: 0 0 14px;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    max-width: 42rem;
+}
+
+.admin-label {
     display: block;
-    margin-top: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted-text);
+    margin-bottom: 6px;
 }
 
-.admin-login-row {
+.admin-login-form__row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: stretch;
+}
+
+.admin-login-form__row input[type="password"] {
+    margin: 0;
+    min-width: 0;
+}
+
+.admin-login-form__row button {
+    margin: 0;
+    padding-left: 18px;
+    padding-right: 18px;
+    white-space: nowrap;
+}
+
+.admin-logged-in__inner {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
-    margin-top: 12px;
+    gap: 14px 16px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(22, 101, 52, 0.2);
+    border: 1px solid rgba(74, 222, 128, 0.28);
 }
 
-.admin-login-row input[type="password"] {
-    max-width: 220px;
+.admin-logged-in__inner > div:first-of-type {
+    flex: 1;
+    min-width: 160px;
+}
+
+.admin-logged-in__inner button {
     margin: 0;
+}
+
+.admin-logged-in__title {
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+}
+
+.admin-logged-in__hint {
+    margin: 0;
+    font-size: 0.82rem;
+}
+
+@media (max-width: 520px) {
+    .admin-login-form__row {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-login-form__row button {
+        width: 100%;
+    }
+
+    .admin-logged-in__inner {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-logged-in__inner button {
+        width: 100%;
+    }
 }
 
 .animate-in {
@@ -402,8 +726,15 @@ button:active {
 }
 
 @media (max-width: 768px) {
+    :root {
+        --app-bottom-pad: calc(72px + var(--safe-bottom));
+    }
+
     body {
-        padding: 16px 12px;
+        padding-top: calc(16px + var(--safe-top));
+        padding-right: calc(12px + var(--safe-right));
+        padding-bottom: var(--safe-bottom);
+        padding-left: calc(12px + var(--safe-left));
     }
 
     .radial-wrapper {
@@ -421,35 +752,57 @@ button:active {
         display: inline-block;
         margin-right: 8px;
     }
+
+    .bottom-nav {
+        display: flex;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 200;
+        justify-content: space-around;
+        align-items: stretch;
+        gap: 4px;
+        padding: 8px max(8px, var(--safe-left)) max(10px, calc(8px + var(--safe-bottom))) max(8px, var(--safe-right));
+        background: rgba(15, 23, 42, 0.92);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-top: 1px solid rgba(148, 163, 184, 0.22);
+        box-shadow: 0 -10px 36px rgba(2, 6, 23, 0.55);
+    }
+
+    #detail-view,
+    #formContainer {
+        padding-bottom: calc(20px + var(--safe-bottom) + 72px);
+    }
+
 }
 </style>
 </head>
 
 <body>
-<div class="app-shell">
+<div class="app-shell" id="appShell" data-app-mode="browse">
 
-<div id="admin-panel" class="card admin-panel">
-    <h1 class="app-heading">Rezeptbuch</h1>
-    <span class="muted">Rezepte hinzufügen, bearbeiten und löschen</span>
-    <div id="admin-login-fields" class="admin-login-row">
-        <input type="password" id="adminPassword" placeholder="Passwort" autocomplete="current-password" aria-label="Passwort zum Bearbeiten">
-        <button type="button" onclick="adminLogin()">Anmelden</button>
-    </div>
-    <div id="admin-logged-in" class="admin-login-row hidden">
-        <span class="muted">Angemeldet</span>
-        <button type="button" onclick="adminLogout()" class="secondary-btn">Abmelden</button>
-    </div>
+<div id="overview-mode" aria-hidden="false">
+
+<header class="app-brand">
+    <h1 class="app-brand__title">Rezeptbuch</h1>
+</header>
+
+<div class="app-mode-banner app-mode-banner--browse">
+    <span class="app-mode-banner__eyebrow">Übersicht</span>
+    <span class="app-mode-banner__line muted">Schnell browsen und suchen</span>
 </div>
 
 <!-- RAD -->
-<div class="radial-wrapper">
+<div class="radial-wrapper scroll-anchor" id="letterWheel" tabindex="0" role="group" aria-label="Buchstabenfilter: Ziehen oder Mausrad zum Wählen, loslassen lädt passende Rezepte. Pfeiltasten drehen das Rad.">
     <div class="radial-pointer" aria-hidden="true"></div>
-    <div id="radial"></div>
-    <div id="centerLetter" class="center-display" aria-label="Current Letter">A</div>
+    <div id="radial" aria-hidden="true"></div>
+    <div id="centerLetter" class="center-display center-display--neutral" aria-live="polite" aria-atomic="true" aria-label="Kein Buchstabe gewählt">–</div>
 </div>
 
 <!-- HEADER -->
-<div class="section-header card">
+<div class="section-header card scroll-anchor" id="recipeSection">
     <h2>Rezepte</h2>
     <div class="actions">
         <button type="button" class="admin-only hidden" onclick="toggleForm()" aria-label="Add Recipe">+ Rezept</button>
@@ -458,32 +811,34 @@ button:active {
 </div>
 
 <!-- SEARCH CONTAINER -->
-<div class="search-container card">
+<div class="search-container card scroll-anchor" id="searchSection">
     <input id="searchInput" placeholder="Suche nach Rezepten..." aria-label="Search Recipes">
     <button onclick="performSearch()">Suchen</button>
 </div>
 
-<div id="detail-view" class="card" style="display: none;">
-    <button class="back-btn" onclick="hideDetailView()">&larr; Zurück zur Übersicht</button>
-    
-    <h2 id="detail-title">Titel des Rezepts</h2>
-    <p id="detail-desc">Beschreibung...</p>
-    <p id="detail-base-servings" class="muted"></p>
-    <div style="margin-bottom: 20px;">
-        <label for="detail-servings-input"><strong>Portionen:</strong></label>
-        <input id="detail-servings-input" type="number" min="1" step="1" value="1" style="width: 90px;">
+<section id="admin-panel" class="card admin-card scroll-anchor" aria-labelledby="admin-heading">
+    <div class="admin-card__head">
+        <h2 id="admin-heading" class="admin-card__title">Bearbeiten</h2>
+        <span id="admin-status-badge" class="admin-card__badge admin-card__badge--out" aria-live="polite">Nur Lesen</span>
     </div>
-    
-    <div style="margin-bottom: 20px;">
-        <strong>Zutaten:</strong>
-        <ul id="detail-ingredients-list"></ul>
+    <p id="admin-card-lead" class="admin-card__lead muted">Zum Anlegen, Ändern oder Löschen von Rezepten bitte anmelden.</p>
+    <div id="admin-login-fields">
+        <label class="admin-label" for="adminPassword">Passwort</label>
+        <div class="admin-login-form__row">
+            <input type="password" id="adminPassword" placeholder="Admin-Passwort eingeben" autocomplete="current-password">
+            <button type="button" onclick="adminLogin()">Anmelden</button>
+        </div>
     </div>
-
-    <div class="detail-actions admin-only hidden">
-        <button type="button" onclick="edit(currentRecipeId)" class="btn-edit">Bearbeiten</button>
-        <button type="button" onclick="deleteRecipeById(currentRecipeId)" class="btn-delete danger-btn">Löschen</button>
+    <div id="admin-logged-in" class="admin-logged-in hidden">
+        <div class="admin-logged-in__inner">
+            <div>
+                <strong class="admin-logged-in__title">Angemeldet</strong>
+                <p class="admin-logged-in__hint muted">Rezepte können bearbeitet werden.</p>
+            </div>
+            <button type="button" onclick="adminLogout()" class="secondary-btn">Abmelden</button>
+        </div>
     </div>
-</div>
+</section>
 
 <!-- FORM -->
 <div id="formContainer" class="card" style="display:none;" aria-labelledby="recipe-form">
@@ -504,7 +859,43 @@ button:active {
 
 <!-- LIST -->
 <div id="list" aria-labelledby="recipe-list"></div>
+
+</div><!-- #overview-mode -->
+
+<div id="detail-view" class="card" aria-hidden="true">
+    <button type="button" class="back-btn" onclick="hideDetailView()">&larr; Zurück zur Übersicht</button>
+    <div class="app-mode-banner app-mode-banner--detail">
+        <span class="app-mode-banner__eyebrow">Rezept</span>
+        <span class="app-mode-banner__line muted">Portionen anpassen</span>
+    </div>
+
+    <h2 id="detail-title">Titel des Rezepts</h2>
+    <p id="detail-desc">Beschreibung...</p>
+    <p id="detail-base-servings" class="muted"></p>
+    <div style="margin-bottom: 20px;">
+        <label for="detail-servings-input"><strong>Portionen:</strong></label>
+        <input id="detail-servings-input" type="number" min="1" step="1" value="1" style="width: 90px;">
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <strong>Zutaten:</strong>
+        <ul id="detail-ingredients-list"></ul>
+    </div>
+
+    <div class="detail-actions admin-only hidden">
+        <button type="button" onclick="edit(currentRecipeId)" class="btn-edit">Bearbeiten</button>
+        <button type="button" onclick="deleteRecipeById(currentRecipeId)" class="btn-delete danger-btn">Löschen</button>
+    </div>
 </div>
+
+</div>
+
+<nav class="bottom-nav" id="bottomNav" aria-label="Hauptnavigation">
+    <button type="button" class="bottom-nav__item bottom-nav__item--active" id="bottom-nav-rezepte" onclick="bottomNavGoRezepte()">Rezepte</button>
+    <button type="button" class="bottom-nav__item" id="bottom-nav-suche" onclick="bottomNavGoSuche()">Suche</button>
+    <button type="button" class="bottom-nav__item" id="bottom-nav-abc" onclick="bottomNavGoAbc()">A–Z</button>
+    <button type="button" class="bottom-nav__item" id="bottom-nav-admin" onclick="bottomNavGoAdmin()">Admin</button>
+</nav>
 
 <script>
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
@@ -527,6 +918,14 @@ function updateAdminUI() {
     const loggedIn = document.getElementById("admin-logged-in");
     if (loginFields) loginFields.classList.toggle("hidden", isAdmin);
     if (loggedIn) loggedIn.classList.toggle("hidden", !isAdmin);
+    const badge = document.getElementById("admin-status-badge");
+    if (badge) {
+        badge.textContent = isAdmin ? "Redakteur" : "Nur Lesen";
+        badge.classList.toggle("admin-card__badge--in", isAdmin);
+        badge.classList.toggle("admin-card__badge--out", !isAdmin);
+    }
+    const lead = document.getElementById("admin-card-lead");
+    if (lead) lead.classList.toggle("hidden", isAdmin);
 }
 
 function refreshAdminStatus() {
@@ -540,6 +939,93 @@ function refreshAdminStatus() {
             isAdmin = false;
             updateAdminUI();
         });
+}
+
+function isMobileBottomNav() {
+    return typeof window.matchMedia === "function" && window.matchMedia("(max-width: 768px)").matches;
+}
+
+function setAppMode(mode) {
+    const shell = document.getElementById("appShell");
+    if (!shell) return;
+    const isDetail = mode === "detail";
+    shell.dataset.appMode = isDetail ? "detail" : "browse";
+    const overviewEl = document.getElementById("overview-mode");
+    const detailEl = document.getElementById("detail-view");
+    if (overviewEl) overviewEl.setAttribute("aria-hidden", isDetail ? "true" : "false");
+    if (detailEl) detailEl.setAttribute("aria-hidden", isDetail ? "false" : "true");
+}
+
+function setBottomNavActive(buttonId) {
+    document.querySelectorAll(".bottom-nav__item").forEach(function(btn) {
+        btn.classList.toggle("bottom-nav__item--active", btn.id === buttonId);
+    });
+}
+
+function clearBottomNavActive() {
+    document.querySelectorAll(".bottom-nav__item").forEach(function(btn) {
+        btn.classList.remove("bottom-nav__item--active");
+    });
+}
+
+function bottomNavGoRezepte() {
+    hideDetailView();
+    const form = document.getElementById("formContainer");
+    if (form && form.style.display !== "none") {
+        form.style.display = "none";
+    }
+    const anchor = document.getElementById("recipeSection");
+    if (anchor) {
+        anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    setBottomNavActive("bottom-nav-rezepte");
+}
+
+function bottomNavGoSuche() {
+    hideDetailView();
+    const section = document.getElementById("searchSection");
+    if (section) {
+        section.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    const input = document.getElementById("searchInput");
+    if (input) {
+        window.setTimeout(function() {
+            input.focus({ preventScroll: true });
+        }, 280);
+    }
+    setBottomNavActive("bottom-nav-suche");
+}
+
+function bottomNavGoAbc() {
+    hideDetailView();
+    const el = document.getElementById("letterWheel");
+    if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        window.setTimeout(function() {
+            try {
+                el.focus({ preventScroll: true });
+            } catch (err) {}
+        }, 350);
+    }
+    setBottomNavActive("bottom-nav-abc");
+}
+
+function bottomNavGoAdmin() {
+    hideDetailView();
+    const el = document.getElementById("admin-panel");
+    if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    if (!isAdmin) {
+        window.setTimeout(function() {
+            const pw = document.getElementById("adminPassword");
+            const loginRow = document.getElementById("admin-login-fields");
+            if (pw && loginRow && !loginRow.classList.contains("hidden")) {
+                pw.focus({ preventScroll: true });
+            }
+        }, 320);
+    }
+    setBottomNavActive("bottom-nav-admin");
 }
 
 function adminLogin() {
@@ -583,16 +1069,40 @@ let angle = 0;
 let velocity = 0;
 let isDragging = false;
 let lastAngle = 0;
-let currentLetter = "A";
+let currentLetter = letters[0];
+let letterWheelCommitted = false;
 let currentRecipeId = null;
 let currentRecipeData = null;
 let wheelSnapTimer = null;
+let loadLetterDedup = { letter: "", t: 0 };
 
 const menu = document.getElementById("radial");
 const centerDisplay = document.getElementById("centerLetter");
 
-const center = { x: 150, y: 150 };
-const radius = 120;
+function getWheelHost() {
+    return document.getElementById("letterWheel");
+}
+
+function getAngleFromClient(clientX, clientY) {
+    const wheel = getWheelHost();
+    if (!wheel) return 0;
+    const rect = wheel.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    return Math.atan2(clientY - cy, clientX - cx);
+}
+
+function getRadialOrbitMetrics() {
+    const w = menu.offsetWidth || 300;
+    const h = menu.offsetHeight || 300;
+    const cx = w / 2;
+    const cy = h / 2;
+    const coarse = typeof window.matchMedia === "function" &&
+        window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+    const inset = coarse ? 38 : 30;
+    const rad = Math.max(44, Math.min(cx, cy) - inset);
+    return { cx, cy, rad };
+}
 
 function buildWheel() {
     menu.innerHTML = "";
@@ -600,7 +1110,11 @@ function buildWheel() {
         const el = document.createElement("div");
         el.className = "radial-item";
         el.innerText = l;
-        el.addEventListener("click", () => setWheelToLetter(l));
+        el.setAttribute("aria-hidden", "true");
+        el.addEventListener("click", function(e) {
+            e.stopPropagation();
+            setWheelToLetter(l);
+        });
         menu.appendChild(el);
     });
     updateWheel();
@@ -611,12 +1125,13 @@ function updateWheel() {
     const targetAngle = -Math.PI / 2;
     let activeIndex = 0;
     let minDiff = Number.POSITIVE_INFINITY;
+    const { cx, cy, rad } = getRadialOrbitMetrics();
 
     items.forEach((item, i) => {
         const a = angle + (i / letters.length) * 2 * Math.PI;
 
-        const x = center.x + radius * Math.cos(a);
-        const y = center.y + radius * Math.sin(a);
+        const x = cx + rad * Math.cos(a);
+        const y = cy + rad * Math.sin(a);
 
         item.style.left = `${x}px`;
         item.style.top = `${y}px`;
@@ -627,30 +1142,52 @@ function updateWheel() {
         }
     });
 
+    const nextLetter = letters[activeIndex];
+
+    if (!letterWheelCommitted) {
+        currentLetter = nextLetter;
+        items.forEach(function(item) {
+            item.classList.remove("active", "inactive");
+            item.classList.add("radial-item--await");
+        });
+        centerDisplay.innerText = "–";
+        centerDisplay.classList.add("center-display--neutral");
+        centerDisplay.setAttribute("aria-label", "Kein Buchstabe gewählt. Rad drehen oder einen Buchstaben antippen.");
+        centerDisplay.classList.remove("pulse");
+        return;
+    }
+
+    items.forEach(function(item) {
+        item.classList.remove("radial-item--await");
+    });
+
     const previousLetter = currentLetter;
+    currentLetter = nextLetter;
     items.forEach((item, i) => {
         const isActive = i === activeIndex;
         item.classList.toggle("active", isActive);
         item.classList.toggle("inactive", !isActive);
     });
 
-    currentLetter = letters[activeIndex];
-    if (previousLetter !== currentLetter) {
+    if (previousLetter !== nextLetter) {
         centerDisplay.classList.remove("pulse");
         void centerDisplay.offsetWidth;
         centerDisplay.classList.add("pulse");
+        if (typeof navigator.vibrate === "function") {
+            try {
+                navigator.vibrate(5);
+            } catch (err) {}
+        }
     }
-    centerDisplay.innerText = currentLetter;
+    centerDisplay.classList.remove("center-display--neutral");
+    centerDisplay.innerText = nextLetter;
+    centerDisplay.setAttribute("aria-label", "Aktueller Buchstabe: " + nextLetter);
 }
 
 function normalize(a) {
     while (a > Math.PI) a -= 2 * Math.PI;
     while (a < -Math.PI) a += 2 * Math.PI;
     return a;
-}
-
-function getAngle(x, y) {
-    return Math.atan2(y - center.y, x - center.x);
 }
 
 function getNearestSnapAngle(rawAngle) {
@@ -663,8 +1200,8 @@ function animateToAngle(targetAngle, onDone = null) {
         const diff = targetAngle - angle;
         if (Math.abs(diff) < 0.001) {
             angle = targetAngle;
-            updateWheel();
             if (onDone) onDone();
+            updateWheel();
             return;
         }
         angle += diff * 0.2;
@@ -677,6 +1214,7 @@ function animateToAngle(targetAngle, onDone = null) {
 function setWheelToLetter(letter) {
     const index = letters.indexOf(letter);
     if (index === -1) return;
+    letterWheelCommitted = true;
     const step = (2 * Math.PI) / letters.length;
     const targetAngle = (-Math.PI / 2) - (index * step);
     velocity = 0;
@@ -684,15 +1222,13 @@ function setWheelToLetter(letter) {
 }
 
 function beginDrag(clientX, clientY) {
-    const r = menu.getBoundingClientRect();
     isDragging = true;
-    lastAngle = getAngle(clientX - r.left, clientY - r.top);
+    lastAngle = getAngleFromClient(clientX, clientY);
 }
 
 function continueDrag(clientX, clientY) {
     if (!isDragging) return;
-    const r = menu.getBoundingClientRect();
-    const a = getAngle(clientX - r.left, clientY - r.top);
+    const a = getAngleFromClient(clientX, clientY);
 
     const d = normalize(a - lastAngle);
     angle += d;
@@ -701,46 +1237,87 @@ function continueDrag(clientX, clientY) {
     updateWheel();
 }
 
-menu.addEventListener("mousedown", e => {
-    beginDrag(e.clientX, e.clientY);
-});
+(function bindRadialWheel() {
+    const host = getWheelHost();
+    if (!host) return;
 
-window.addEventListener("mousemove", e => {
-    continueDrag(e.clientX, e.clientY);
-});
+    host.addEventListener("mousedown", function(e) {
+        if (e.button !== 0) return;
+        beginDrag(e.clientX, e.clientY);
+    });
 
-window.addEventListener("mouseup", end);
-menu.addEventListener("mouseleave", end);
+    window.addEventListener("mousemove", function(e) {
+        continueDrag(e.clientX, e.clientY);
+    });
 
-menu.addEventListener("touchstart", e => {
-    if (!e.touches.length) return;
-    const t = e.touches[0];
-    beginDrag(t.clientX, t.clientY);
-}, { passive: true });
+    window.addEventListener("mouseup", end);
+    host.addEventListener("mouseleave", end);
 
-menu.addEventListener("touchmove", e => {
-    if (!e.touches.length) return;
-    e.preventDefault();
-    const t = e.touches[0];
-    continueDrag(t.clientX, t.clientY);
-}, { passive: false });
+    host.addEventListener("touchstart", function(e) {
+        if (!e.touches.length) return;
+        const t = e.touches[0];
+        beginDrag(t.clientX, t.clientY);
+    }, { passive: true });
 
-menu.addEventListener("touchend", end, { passive: true });
-menu.addEventListener("touchcancel", end, { passive: true });
+    host.addEventListener("touchmove", function(e) {
+        if (!e.touches.length) return;
+        e.preventDefault();
+        const t = e.touches[0];
+        continueDrag(t.clientX, t.clientY);
+    }, { passive: false });
 
-menu.addEventListener("wheel", e => {
-    e.preventDefault();
-    angle += e.deltaY * 0.004;
-    velocity = 0;
-    updateWheel();
+    host.addEventListener("touchend", end, { passive: true });
+    host.addEventListener("touchcancel", end, { passive: true });
 
-    if (wheelSnapTimer) {
-        clearTimeout(wheelSnapTimer);
-    }
-    wheelSnapTimer = setTimeout(() => {
-        snap();
-    }, 140);
-}, { passive: false });
+    host.addEventListener("wheel", function(e) {
+        e.preventDefault();
+        angle += e.deltaY * 0.004;
+        velocity = 0;
+        updateWheel();
+
+        if (wheelSnapTimer) {
+            clearTimeout(wheelSnapTimer);
+        }
+        wheelSnapTimer = setTimeout(function() {
+            snap();
+        }, 140);
+    }, { passive: false });
+})();
+
+function rotateWheelBy(delta) {
+    const idx = letters.indexOf(currentLetter);
+    if (idx === -1) return;
+    const len = letters.length;
+    const next = ((idx + delta) % len + len) % len;
+    setWheelToLetter(letters[next]);
+}
+
+function setupLetterWheelKeyboard() {
+    const host = getWheelHost();
+    if (!host || host.dataset.keyboardBound === "1") return;
+    host.dataset.keyboardBound = "1";
+    host.addEventListener("keydown", function(e) {
+        if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+            e.preventDefault();
+            rotateWheelBy(1);
+        } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+            e.preventDefault();
+            rotateWheelBy(-1);
+        } else if (e.key === "Home") {
+            e.preventDefault();
+            setWheelToLetter("A");
+        } else if (e.key === "End") {
+            e.preventDefault();
+            setWheelToLetter("Z");
+        } else if (e.key === "PageDown") {
+            e.preventDefault();
+            rotateWheelBy(5);
+        } else if (e.key === "PageUp") {
+            e.preventDefault();
+            rotateWheelBy(-5);
+        }
+    });
+}
 
 function end() {
     if (!isDragging) return;
@@ -760,10 +1337,19 @@ function inertia() {
 
 function snap() {
     const target = getNearestSnapAngle(angle);
-    animateToAngle(target, () => loadLetter(currentLetter));
+    animateToAngle(target, function() {
+        letterWheelCommitted = true;
+        loadLetter(currentLetter);
+    });
 }
 
 function loadLetter(letter) {
+    letterWheelCommitted = true;
+    const now = Date.now();
+    if (loadLetterDedup.letter === letter && now - loadLetterDedup.t < 200) {
+        return;
+    }
+    loadLetterDedup = { letter: letter, t: now };
     apiFetch(`/recipes/${letter}`)
         .then(res => res.json())
         .then(data => {
@@ -952,9 +1538,17 @@ function showRecipeDetail(id) {
             currentRecipeId = data.id;
             currentRecipeData = data;
 
-            document.getElementById("list").style.display = "none";
+            const formEl = document.getElementById("formContainer");
+            if (formEl && formEl.style.display !== "none") {
+                formEl.style.display = "none";
+            }
+            setAppMode("detail");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+
+            if (isMobileBottomNav()) {
+                clearBottomNavActive();
+            }
             const detailView = document.getElementById("detail-view");
-            detailView.style.display = "block";
             detailView.classList.remove("animate-in");
             void detailView.offsetWidth;
             detailView.classList.add("animate-in");
@@ -974,10 +1568,12 @@ function showRecipeDetail(id) {
 }
 
 function hideDetailView() {
-    document.getElementById("detail-view").style.display = "none";
-    document.getElementById("list").style.display = "block";
+    setAppMode("browse");
     currentRecipeId = null;
     currentRecipeData = null;
+    if (isMobileBottomNav()) {
+        setBottomNavActive("bottom-nav-rezepte");
+    }
 }
 
 function formatAmount(amount) {
@@ -1033,25 +1629,49 @@ function deleteRecipeById(id) {
         });
 }
 
+function truncatePreview(text, maxChars) {
+    const max = maxChars || 160;
+    const t = String(text || "").trim().replace(/\s+/g, " ");
+    if (!t) return "Keine Beschreibung.";
+    if (t.length <= max) return t;
+    return t.slice(0, max).trimEnd() + "…";
+}
+
+function ingredientPreviewLine(ingredients, maxNames) {
+    const max = maxNames || 4;
+    const list = Array.isArray(ingredients) ? ingredients : [];
+    if (!list.length) return "Keine Zutaten eingetragen.";
+    const parts = list.slice(0, max).map(function(i) {
+        return (i && i.name) ? String(i.name).trim() : "";
+    }).filter(Boolean);
+    const line = parts.join(" · ");
+    if (list.length > max) {
+        return line + " … +" + (list.length - max) + " weitere";
+    }
+    return line || "Keine Zutaten eingetragen.";
+}
+
 function render(recipes) {
     const listDiv = document.getElementById("list");
     listDiv.innerHTML = "";
-    listDiv.classList.remove("animate-in");
+    listDiv.classList.remove("animate-in", "recipe-grid");
     void listDiv.offsetWidth;
     listDiv.classList.add("animate-in");
 
     if (!recipes.length) {
         const emptyState = document.createElement("div");
         emptyState.className = "list-empty";
-        emptyState.innerText = "Keine Rezepte gefunden. Probiere eine andere Suche oder einen anderen Buchstaben.";
+        emptyState.innerText = "Keine Rezepte in dieser Ansicht. Buchstabenrad drehen oder antippen, suchen oder „Alle Rezepte anzeigen“ wählen.";
         listDiv.appendChild(emptyState);
         updateAdminUI();
         return;
     }
 
+    listDiv.classList.add("recipe-grid");
+
     recipes.forEach((recipe, index) => {
         const recipeDiv = document.createElement("div");
-        recipeDiv.className = "recipe";
+        recipeDiv.className = "recipe recipe-card";
         recipeDiv.classList.add("animate-in");
         recipeDiv.style.animationDelay = `${index * 35}ms`;
         recipeDiv.style.cursor = "pointer";
@@ -1063,20 +1683,28 @@ function render(recipes) {
         };
 
         const title = document.createElement("h3");
+        title.className = "recipe-card-title";
         title.innerText = recipe.title;
 
-        const servings = document.createElement("p");
-        servings.innerText = `Servings: ${recipe.servings}`;
+        const meta = document.createElement("div");
+        meta.className = "recipe-card-meta";
+        const servingsBadge = document.createElement("span");
+        servingsBadge.className = "recipe-card-badge";
+        const n = Array.isArray(recipe.ingredients) ? recipe.ingredients.length : 0;
+        servingsBadge.innerText = (recipe.servings || 1) + " Portion" + ((recipe.servings || 1) === 1 ? "" : "en");
+        const ingBadge = document.createElement("span");
+        ingBadge.className = "recipe-card-badge";
+        ingBadge.innerText = n === 1 ? "1 Zutat" : n + " Zutaten";
+        meta.appendChild(servingsBadge);
+        meta.appendChild(ingBadge);
 
         const description = document.createElement("p");
-        description.innerText = recipe.description;
+        description.className = "recipe-card-preview";
+        description.innerText = truncatePreview(recipe.description);
 
-        const ingredientsList = document.createElement("ul");
-        recipe.ingredients.forEach(ingredient => {
-            const ingredientItem = document.createElement("li");
-            ingredientItem.innerText = `${ingredient.amount} ${ingredient.unit} ${ingredient.name}`;
-            ingredientsList.appendChild(ingredientItem);
-        });
+        const ingredientsLine = document.createElement("p");
+        ingredientsLine.className = "recipe-card-ingredients";
+        ingredientsLine.innerText = ingredientPreviewLine(recipe.ingredients);
 
         const editButton = document.createElement("button");
         editButton.type = "button";
@@ -1117,9 +1745,9 @@ function render(recipes) {
         };
 
         recipeDiv.appendChild(title);
-        recipeDiv.appendChild(servings);
+        recipeDiv.appendChild(meta);
         recipeDiv.appendChild(description);
-        recipeDiv.appendChild(ingredientsList);
+        recipeDiv.appendChild(ingredientsLine);
         recipeDiv.appendChild(editButton);
         recipeDiv.appendChild(deleteButton);
 
@@ -1132,8 +1760,10 @@ function loadAllRecipes() {
     apiFetch("/recipes")
         .then(res => res.json())
         .then(data => {
+            letterWheelCommitted = false;
             hideDetailView();
             render(data);
+            updateWheel();
         });
 }
 
@@ -1142,8 +1772,10 @@ function performSearch() {
     apiFetch(`/search?query=${encodeURIComponent(query)}`)
         .then(res => res.json())
         .then(data => {
+            letterWheelCommitted = false;
             hideDetailView();
             render(data);
+            updateWheel();
         });
 }
 
@@ -1163,7 +1795,16 @@ document.getElementById("adminPassword").addEventListener("keydown", function(ev
 });
 
 buildWheel();
-refreshAdminStatus().then(() => loadLetter(currentLetter));
+setupLetterWheelKeyboard();
+window.addEventListener("resize", function() {
+    requestAnimationFrame(function() {
+        updateWheel();
+    });
+});
+refreshAdminStatus().then(function() {
+    render([]);
+    updateWheel();
+});
 </script>
 
 </body>
