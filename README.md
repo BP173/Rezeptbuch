@@ -83,3 +83,7 @@ Die Compose-Datei bindet ein Volume unter `/data` für die Datenbank-Datei, wenn
 
 - `SECRET_KEY` und `ADMIN_PASSWORD` für echte Deployments **immer** setzen.
 - `API_ADD_KEY` nur setzen, wenn Automation benötigt wird; Schlüssel wie ein Passwort behandeln.
+
+## Screenshot Rezeptbuch Übersicht
+
+![Rezeptbuch Übersicht](templates/Screenshot_Rezeptbuch03.png)
